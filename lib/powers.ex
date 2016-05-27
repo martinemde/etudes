@@ -42,12 +42,30 @@ defmodule Powers do
   def nth_root(x, n, a) do
     f = pow(a,n) - x
     f_prime = n * pow(a, n-1)
-    next = a - f/f_prime
+    change = f/f_prime
+    next = a - change
 
-    if f/f_prime < 1.0e-8 do
+    if change < 1.0e-8 do
       next
     else
       nth_root(x, n, next)
     end
+  end
+
+  # reduces a stream of answers
+  def new_nth_root(x,n) do
+    nth_root_answer_stream(x, n)
+    |> Enum.reduce_while(x, fn (next, prev) ->
+      if abs(prev - next) > 1.0e-8, do: {:cont, next}, else: {:halt, next}
+    end)
+  end
+
+  # streams increasingly better solutions for nth_root
+  def nth_root_answer_stream(x,n) do
+    Stream.unfold(x/2.0, fn a ->
+      f = pow(a,n) - x
+      f_prime = n * pow(a, n-1)
+      {a, a - f/f_prime} # return {previous value, new value}
+    end)
   end
 end
